@@ -60,6 +60,7 @@ def get_big_database():
 
     with open("unique_chords.txt", 'w') as toWrite:
         for x in unique_chords:
+
             toWrite.write(x + ",")
 
     return pd.concat(frames), unique_chords

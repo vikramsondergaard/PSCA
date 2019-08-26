@@ -5,29 +5,53 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import numpy as np
 
+from PSCA.chord_wrangling import handle_chord
+
+chords = 'C Cm Caug Cdim Csus C# C#m C#aug C#dim C#sus D Dm Daug Ddim Dsus D# D#m D#aug D#dim D#sus E Em Eaug Edim Esus F Fm Faug Fdim Fsus F# F#m F#aug F#dim F#sus G Gm Gaug Gdim Gsus G# G#m G#aug G#dim G#sus A Am Aaug Adim Asus A# A#m A#aug A#dim A#sus B Bm Baug Bdim Bsus'.split()
+
+
+note_dict = {'A-': 11,
+             'A': 0,
+             'A#': 1,
+             'B-': 1,
+             'B': 2,
+             'B#': 3,
+             'C-': 2,
+             'C': 3,
+             'C#': 4,
+             'D-': 4,
+             'D': 5,
+             'D#': 6,
+             'E-': 6,
+             'E': 7,
+             'E#': 8,
+             'F-': 7,
+             'F': 8,
+             'F#': 9,
+             'G-': 9,
+             'G': 10,
+             'G#': 11}
+
 batch_size = 16
 epochs = 8
 lstm_units = 64
 dropout = 0.2
 sequence_length = 4
 
-chord_note_df = pd.read_pickle("chord_prediction_system/chord_note_df.pkl")
-
-with open('chord_prediction_system/unique_chords.txt', 'r') as uc:
-    unique_chords = uc.read().split(',')
+chord_note_df = pd.read_pickle("~/comp2560/PSCA/chord_note_df.pkl")
 
 unique_chord_dict = dict()
 
-for count, chord in enumerate(unique_chords):
+for count, chord in enumerate(chords):
     unique_chord_dict[chord] = int(count)
 
 x = np.zeros((len(chord_note_df), sequence_length, 12), dtype='float32')
-y = np.zeros((len(chord_note_df), sequence_length, len(unique_chords)), dtype='int')
+y = np.zeros((len(chord_note_df), sequence_length, len(chords)), dtype='int')
 
 for i in range(0, len(chord_note_df) - sequence_length):
 
     x[i][0] = np.array(chord_note_df.iloc[i, 1:])
-    matrix_index = unique_chord_dict[chord_note_df.iloc[i, 0]]
+    matrix_index = unique_chord_dict[handle_chord(chord_note_df.iloc[i, 0])]
     y[i][0][matrix_index] = 1
 
 x_train, x_test, y_train, y_test = train_test_split(
@@ -47,7 +71,7 @@ model.add(LSTM(lstm_units, return_sequences=True))
 model.add(Dropout(dropout))
 model.add(LSTM(lstm_units, go_backwards=True, return_sequences=True))
 model.add(Dropout(dropout))
-model.add(TimeDistributed(Dense(len(unique_chords))))
+model.add(TimeDistributed(Dense(len(chords))))
 model.add(Activation('softmax'))
 
 optimizer = Adam()
